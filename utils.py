@@ -6,7 +6,7 @@ import os
 import torch
 import pickle
 import time
-
+import argparse
 
 def load_json(path):
     with open(path,'r') as f:
@@ -65,6 +65,13 @@ def mkdir(dir):
         pass
     else:
         os.makedirs(dir)
+
+
+def convert_dict_to_args(d):
+    parser = argparse.ArgumentParser()
+    for k,v in d.items():
+        parser.add_argument(f'--{k}', default=v)
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
