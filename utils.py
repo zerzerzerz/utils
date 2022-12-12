@@ -7,6 +7,7 @@ import torch
 import pickle
 import time
 import argparse
+import shutil
 
 def load_json(path):
     with open(path,'r') as f:
@@ -62,9 +63,8 @@ class Logger():
 
 def mkdir(dir):
     if os.path.isdir(dir):
-        pass
-    else:
-        os.makedirs(dir)
+        shutil.rmtree(dir)
+    os.makedirs(dir)
 
 
 def convert_dict_to_args(d):
