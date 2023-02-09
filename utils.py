@@ -40,7 +40,7 @@ def setup_seed(seed = 3407):
 
 
 def get_datetime():
-    t = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
     return t
 
 
