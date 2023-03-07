@@ -4,7 +4,7 @@ class Config:
     @staticmethod
     def _save(path:str):
         args = {}
-        for k in dir(Config):
+        for k in sorted(dir(Config)):
             if not k.startswith("_"):
                 args[k] = getattr(Config, k)
         utils.save_json(args, path)
@@ -12,7 +12,7 @@ class Config:
     @staticmethod
     def _display(n:int=60):
         print("*"*n)
-        for k in dir(Config):
+        for k in sorted(dir(Config)):
             if not k.startswith("_"):
                 print("{:<20}\t{}".format(k, getattr(Config, k)))
         print("*"*n)
@@ -27,3 +27,4 @@ class Config:
     hidden_dim = 100000
     output_dim = 100000
     num_layers = 100000
+    num_epochs = 1000
