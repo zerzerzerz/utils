@@ -1,4 +1,6 @@
 import utils
+from typing import Union
+import argparse
 
 class Config:
     @staticmethod
@@ -18,8 +20,15 @@ class Config:
         print("*"*n)
 
     @staticmethod
-    def _load(path:str):
-        args = utils.load_json(path)
+    def _load(args:Union[str, dict, argparse.Namespace]):
+        if isinstance(args, str):
+            args = utils.load_json(args)
+        elif isinstance(args, dict):
+            pass
+        elif isinstance(args, argparse.Namespace):
+            args = dict(vars(args))
+        else:
+            raise NotImplementedError(f"type of args is {type(args)}, not implemented")
         for k,v in args.items():
             setattr(Config, k, v)
     
