@@ -8,6 +8,7 @@ import pickle
 import time
 import argparse
 import shutil
+import functools
 
 def load_json(path):
     with open(path,'r') as f:
@@ -72,6 +73,20 @@ def convert_dict_to_args(d):
     for k,v in d.items():
         parser.add_argument(f'--{k}', default=v)
     return parser.parse_args()
+
+
+def record_time(func):
+    @functools.wraps(func)
+    def run(*args, **kwds):
+        torch.cuda.synchronize()
+        s = time.time()
+        ans = func(*args, **kwds)
+        torch.cuda.synchronize()
+        e = time.time()
+        print(f"Running time for {func.__name__} = {e-s} (s)")
+        return ans
+    return run
+
 
 
 if __name__ == "__main__":
