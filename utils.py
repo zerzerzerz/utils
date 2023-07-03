@@ -64,10 +64,15 @@ class Logger():
         return
 
 
-def mkdir(dir):
+def mkdir(dir, rm=False):
     if os.path.isdir(dir):
-        shutil.rmtree(dir)
-    os.makedirs(dir)
+        if rm:
+            shutil.rmtree(dir)
+            os.makedirs
+        else:
+            pass
+    else:
+        os.makedirs(dir)
 
 
 def convert_dict_to_args(d):
