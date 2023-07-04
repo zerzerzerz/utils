@@ -68,7 +68,7 @@ def mkdir(dir, rm=False):
     if os.path.isdir(dir):
         if rm:
             shutil.rmtree(dir)
-            os.makedirs
+            os.makedirs(dir)
         else:
             pass
     else:
