@@ -72,9 +72,8 @@ def record_time(func):
 
 
 
-
 class MaskGenerator(torch.nn.Module):
-    def __init__(self, mask_ratio:float, masked_padding_value:int=0) -> None:
+    def __init__(self, mask_ratio:float, masked_padding_value:float) -> None:
         """
         @params:
             mask_ratio: ratio to masked
@@ -96,22 +95,23 @@ class MaskGenerator(torch.nn.Module):
         @returns:
             masked_x
             mask: 1 means keep, 0 means masked
+            mask_idx
+            unmask_idx
         """
         mask_len = int(self.mask_ratio * x.shape[1])
 
-        noise = torch.rand_like(x)
-        idx_shuffle = noise.argsort(dim=1)
-        idx_restore = idx_shuffle.argsort(dim=1)
+        idx_shuffle = torch.rand_like(x).argsort(dim=1)
 
-        mask = torch.ones_like(x)
-        mask[:, 0:mask_len, :] = 0
-        mask = mask.gather(dim=1, index=idx_restore)
+        # .sort() to keep their original relative order
+        mask_idx = idx_shuffle[:, 0:mask_len, :].sort(dim=1)[0]
+        unmask_idx = idx_shuffle[:, mask_len:, :].sort(dim=1)[0]
+        restore_idx = torch.cat([mask_idx, unmask_idx], dim=1).argsort(dim=1)
 
-        masked_x = x.gather(dim=1, index=idx_shuffle)
-        masked_x[:, 0:mask_len, :] = self.masked_padding_value
-        masked_x = masked_x.gather(dim=1, index=idx_restore)
+        masked_part = torch.full_like(mask_idx, self.masked_padding_value, dtype=x.dtype)
+        unmasked_part = x.gather(dim=1, index=unmask_idx)
+        masked_x = torch.cat([masked_part, unmasked_part], dim=1).gather(dim=1, index=restore_idx)
 
-        return masked_x, mask
+        mask = torch.cat([torch.zeros_like(mask_idx), torch.ones_like(unmask_idx)], dim=1)
+        mask = mask.gather(dim=1, index=restore_idx)
 
-
-
+        return masked_x, mask, mask_idx, unmask_idx
