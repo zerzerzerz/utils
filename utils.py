@@ -6,7 +6,6 @@ import os
 import torch
 import pickle
 import time
-import argparse
 import shutil
 import functools
 
@@ -48,23 +47,7 @@ def get_datetime():
     return t
 
 
-class Logger():
-    def __init__(self,log_file_path) -> None:
-        self.path = log_file_path
-        with open(self.path,'w') as f:
-            f.write(get_datetime() + "\n")
-            print(get_datetime())
-        return
-    
-    def log(self,content):
-        content = str(content)
-        with open(self.path,'a') as f:
-            f.write(content + "\n")
-            print(content)
-        return
-
-
-def mkdir(dir, rm=False):
+def mkdir(dir:str, rm:bool=False):
     if os.path.isdir(dir):
         if rm:
             shutil.rmtree(dir)
@@ -73,13 +56,6 @@ def mkdir(dir, rm=False):
             pass
     else:
         os.makedirs(dir)
-
-
-def convert_dict_to_args(d):
-    parser = argparse.ArgumentParser()
-    for k,v in d.items():
-        parser.add_argument(f'--{k}', default=v)
-    return parser.parse_args()
 
 
 def record_time(func):
@@ -96,5 +72,46 @@ def record_time(func):
 
 
 
-if __name__ == "__main__":
-    print(get_datetime())
+
+class MaskGenerator(torch.nn.Module):
+    def __init__(self, mask_ratio:float, masked_padding_value:int=0) -> None:
+        """
+        @params:
+            mask_ratio: ratio to masked
+            masked_padding_value, replace original value with this
+        """
+        super().__init__()
+        self.mask_ratio = mask_ratio
+        self.masked_padding_value = masked_padding_value
+    
+    
+    def forward(self, x:torch.Tensor):
+        return self.generate_mask(x)
+
+    
+    def generate_mask(self, x:torch.Tensor):
+        """
+        @params:
+            x: shape = [batch_size, seq_len, channel]
+        @returns:
+            masked_x
+            mask: 1 means keep, 0 means masked
+        """
+        mask_len = int(self.mask_ratio * x.shape[1])
+
+        noise = torch.rand_like(x)
+        idx_shuffle = noise.argsort(dim=1)
+        idx_restore = idx_shuffle.argsort(dim=1)
+
+        mask = torch.ones_like(x)
+        mask[:, 0:mask_len, :] = 0
+        mask = mask.gather(dim=1, index=idx_restore)
+
+        masked_x = x.gather(dim=1, index=idx_shuffle)
+        masked_x[:, 0:mask_len, :] = self.masked_padding_value
+        masked_x = masked_x.gather(dim=1, index=idx_restore)
+
+        return masked_x, mask
+
+
+
